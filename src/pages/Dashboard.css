@@ -1,0 +1,367 @@
+.dashboard-container {
+    min-height: 100vh;
+    width: 100vw;
+    background-color: #f8f9fa;
+    padding: 2vh 5vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-wrapper {
+    width: 100%;
+    min-height: calc(100vh - 4vh);
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-left h1 {
+    color: #1a1a1a;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.header-left p {
+    color: #555;
+    font-size: 0.9em;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info {
+    text-align: right;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 0.95em;
+}
+
+.user-email {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #1a1a1a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.logout-btn:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.controls-panel {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    border: 1px solid #eee;
+}
+
+.controls-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.radio-label input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #000;
+}
+
+.data-source-group {
+    display: flex;
+    gap: 45px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.select-wrapper,
+.input-wrapper {
+    flex: 1;
+    min-width: 250px;
+}
+
+select,
+input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s;
+    background-color: #fff;
+}
+
+select:focus,
+input[type="text"]:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+select:disabled,
+input[type="text"]:disabled {
+    background: #f9f9f9;
+    cursor: not-allowed;
+}
+
+.generate-btn {
+    padding: 12px 30px;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.generate-btn:hover:not(:disabled) {
+    background-color: #333;
+    transform: translateY(-2px);
+}
+
+.generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #666;
+}
+
+.error-message {
+    background: #fff;
+    border: 1px solid #000;
+    color: #000;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.kpi-card {
+    padding: 25px;
+    border-radius: 12px;
+    color: #000;
+    background: #fff;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card.good {
+    border-bottom: 3px solid #10b981;
+}
+
+.kpi-card.good .kpi-icon {
+    color: #10b981;
+}
+
+.kpi-card.warning {
+    border-bottom: 3px solid #ef4444;
+}
+
+.kpi-card.warning .kpi-icon {
+    color: #ef4444;
+}
+
+.kpi-icon {
+    opacity: 1;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-value {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.kpi-label {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.chart-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #eee;
+    box-shadow: none;
+}
+
+.chart-container h3 {
+    color: #1a1a1a;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 20px;
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 1.2em;
+    color: #000;
+    font-weight: 500;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: #999;
+}
+
+.empty-state-icon {
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-container {
+        padding: 15px;
+    }
+
+    .dashboard-wrapper {
+        min-height: calc(100vh - 30px);
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .header-left h1 {
+        font-size: 2em;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-section {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+
+    .generate-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
