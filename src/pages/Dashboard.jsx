@@ -51,6 +51,9 @@ const InteractiveDashboard = () => {
       if (user.role !== 'guest') {
         // Call your backend API here
         const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {});
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       } else {
         const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
           method: 'POST',
@@ -64,10 +67,10 @@ const InteractiveDashboard = () => {
             pagesize: API_CONFIG.PAGE_SIZE
           })
         });
-      }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       const data = await response.json();

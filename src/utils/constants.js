@@ -4,7 +4,6 @@ export const API_CONFIG = {
     LOGIN_AUTH: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/auth',
     LOGIN_TOKEN: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/token',
     PAGE_SIZE: 1000,
-    AUTH_URL: LOGIN_AUTH + `?client_id=frontend-client` + `&response_type=code` + `&scope=openid` + `&redirect_uri=${encodeURIComponent("http://localhost:5678/rest/oauth2-credential/callback")}` + `&login_hint=${encodeURIComponent(email)}`,
 };
 export const CHART_COLORS = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 

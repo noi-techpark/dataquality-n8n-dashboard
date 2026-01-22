@@ -13,28 +13,25 @@ export const auth = {
   },
 
   // Login function
-  // login: async (email, password) => {
+  login: async (email, password) => {
 
-  //   const data = await fetch(API_CONFIG.LOGIN_AUTH,
-  //     {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${API_CONFIG.LOGIN_TOKEN}`
-  //       },
-  //     });
-  //   if (!data) {
-  //     throw new Error('Invalid Login');
-  //   };
+    const data = await fetch(API_CONFIG.LOGIN_AUTH,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_CONFIG.LOGIN_TOKEN}`
+        },
+      });
+    if (!data) {
+      throw new Error('Invalid Login');
+    };
 
-  //   // Store authentication data
-  //   localStorage.setItem('authToken', data.token);
-  //   localStorage.setItem('user', JSON.stringify(data.user));
+    // Store authentication data
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
 
-  //   return data;
-  // },
-  login: (email) => {
-    window.location.href = API_CONFIG.AUTH_URL;
+    return data;
   },
 
   // Guest login function
