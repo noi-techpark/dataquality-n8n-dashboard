@@ -1,3 +1,4 @@
+import { API_CONFIG } from '../utils/constants';
 export const auth = {
   // Check if user is authenticated
   isAuthenticated: () => {
@@ -12,24 +13,28 @@ export const auth = {
   },
 
   // Login function
-  login: async (email, password) => {
-    // send request here to keycloak
-    // recieved then check is authenticated func, then below pass the data to localstorage
-    // then return data to try statement and login the user 
-    const data = {
-      'token': 'dummy-auth-token',
-      'user': {
-        name: 'User',
-        email: email,
-        role: 'user'
-      }
-    }
+  // login: async (email, password) => {
 
-    // Store authentication data
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+  //   const data = await fetch(API_CONFIG.LOGIN_AUTH,
+  //     {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${API_CONFIG.LOGIN_TOKEN}`
+  //       },
+  //     });
+  //   if (!data) {
+  //     throw new Error('Invalid Login');
+  //   };
 
-    return data;
+  //   // Store authentication data
+  //   localStorage.setItem('authToken', data.token);
+  //   localStorage.setItem('user', JSON.stringify(data.user));
+
+  //   return data;
+  // },
+  login: (email) => {
+    window.location.href = API_CONFIG.AUTH_URL;
   },
 
   // Guest login function

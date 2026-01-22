@@ -49,7 +49,7 @@ export default function LoginPage() {
 
     try {
       // here send request to keycloak to login auth users
-      await auth.login(email, password);
+      await auth.login(email);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Login failed');

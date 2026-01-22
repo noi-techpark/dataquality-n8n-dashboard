@@ -47,31 +47,24 @@ const InteractiveDashboard = () => {
         throw new Error('Please select a dataset or provide a valid API URL');
       }
 
-      // ============================================================
-      // TODO: FUTURE BACKEND INTEGRATION
-      // ============================================================
-      // Currently, we use the n8n webhook for both Guests and Users.
-      // When you connect your real backend:
-      //
-      // const user = auth.getUser();
-      // if (user.role !== 'guest') {
-      //   // Call your backend API here
-      //   // const response = await fetch('YOUR_BACKEND_ENDPOINT', { ... });
-      // }
-      // ============================================================
-
-      const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth.getToken()}`
-        },
-        body: JSON.stringify({
-          apiUrl,
-          dataset: selectedDataset || 'Custom',
-          pagesize: API_CONFIG.PAGE_SIZE
-        })
-      });
+      const user = auth.getUser();
+      if (user.role !== 'guest') {
+        // Call your backend API here
+        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {});
+      } else {
+        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.getToken()}`
+          },
+          body: JSON.stringify({
+            apiUrl,
+            dataset: selectedDataset || 'Custom',
+            pagesize: API_CONFIG.PAGE_SIZE
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
