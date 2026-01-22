@@ -48,6 +48,7 @@ export default function LoginPage() {
     }
 
     try {
+      // here send request to keycloak to login auth users
       await auth.login(email, password);
       navigate('/dashboard');
     } catch (err) {

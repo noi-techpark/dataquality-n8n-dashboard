@@ -13,6 +13,9 @@ export const auth = {
 
   // Login function
   login: async (email, password) => {
+    // send request here to keycloak
+    // recieved then check is authenticated func, then below pass the data to localstorage
+    // then return data to try statement and login the user 
     const data = {
       'token': 'dummy-auth-token',
       'user': {
