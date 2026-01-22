@@ -1,6 +1,6 @@
 export const API_CONFIG = {
     METADATA_URL: 'https://tourism.api.opendatahub.com/v1/MetaData?pagesize=1000&origin=webcomp-datasets-list',
-    N8N_WEBHOOK_URL: 'http://localhost:5678/webhook/data-quality',
+    N8N_WEBHOOK_URL: 'https://kaiozwald.app.n8n.cloud/webhook/data-quality',
     PAGE_SIZE: 1000
 };
 
