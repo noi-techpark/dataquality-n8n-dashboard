@@ -50,10 +50,25 @@ const InteractiveDashboard = () => {
       const user = auth.getUser();
       if (user.role !== 'guest') {
         // Call your backend API here
-        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {});
+        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.getToken()}`
+          },
+          body: JSON.stringify({
+            apiUrl,
+            dataset: selectedDataset || 'Custom',
+            pagesize: API_CONFIG.PAGE_SIZE
+          })
+        });
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const data = await response.json();
+        setDashboardData(data);
       } else {
         const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
           method: 'POST',
@@ -71,10 +86,10 @@ const InteractiveDashboard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-      }
 
-      const data = await response.json();
-      setDashboardData(data);
+        const data = await response.json();
+        setDashboardData(data);
+      }
 
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please try again.');
