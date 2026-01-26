@@ -16,6 +16,8 @@ import ChartsGrid from '../components/dashboard/ChartsGrid.jsx';
 // Styles
 import './Dashboard.css';
 
+import { useAuth } from '../hooks/useAuth';
+
 const InteractiveDashboard = () => {
   const [selectedDataset, setSelectedDataset] = useState('');
   const [customUrl, setCustomUrl] = useState('');
@@ -25,13 +27,12 @@ const InteractiveDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
 
   const navigate = useNavigate();
-  const user = auth.getUser();
+  const { user } = useAuth();
 
   const { datasets, loading: datasetsLoading, error: datasetsError } = useFetchDatasets();
 
   const handleLogout = () => {
     auth.logout();
-    navigate('/login');
   };
 
   const generateReport = async () => {
@@ -47,49 +48,24 @@ const InteractiveDashboard = () => {
         throw new Error('Please select a dataset or provide a valid API URL');
       }
 
-      const user = auth.getUser();
-      if (user.role !== 'guest') {
-        // Call your backend API here
-        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${auth.getToken()}`
-          },
-          body: JSON.stringify({
-            apiUrl,
-            dataset: selectedDataset || 'Custom',
-            pagesize: API_CONFIG.PAGE_SIZE
-          })
-        });
+      const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          apiUrl,
+          dataset: selectedDataset || 'Custom',
+          pagesize: API_CONFIG.PAGE_SIZE
+        })
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setDashboardData(data);
-      } else {
-        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${auth.getToken()}`
-          },
-          body: JSON.stringify({
-            apiUrl,
-            dataset: selectedDataset || 'Custom',
-            pagesize: API_CONFIG.PAGE_SIZE
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setDashboardData(data);
+      if (!response.ok) {
+        throw new Error(`HTTP status: ${response.status}`);
       }
+
+      const data = await response.json();
+      setDashboardData(data);
 
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please try again.');

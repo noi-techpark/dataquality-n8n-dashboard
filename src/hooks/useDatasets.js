@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
+import { useAuth } from './useAuth';
+import { auth } from '../utils/auth'; // Keep this for auth.getToken()
 
 const formatDataset = (item) => ({
     value: item.Id,
@@ -18,28 +19,22 @@ export const useFetchDatasets = () => {
     useEffect(() => {
         const fetchDatasets = async () => {
             try {
-                // TODO: For Authenticated Users (Non-Guest):
-                // Replace this URL with your backend API endpoint if authenticated users need different data.
-                // const isGuest = auth.getUser()?.role === 'guest';
-                // const url = isGuest ? API_CONFIG.METADATA_URL : 'YOUR_BACKEND_API_URL/datasets';
+                const response = await fetch(API_CONFIG.METADATA_URL);
 
-                const response = await fetch(API_CONFIG.METADATA_URL, {
-                    headers: {
-                        'Authorization': `Bearer ${auth.getToken()}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch datasets');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-                const formatted = data.Items
+                const items = data.Items || [];
+
+                const formatted = items
                     .map(formatDataset)
                     .sort((a, b) => a.label.localeCompare(b.label));
 
                 setDatasets(formatted);
+                setError('');
             } catch (err) {
-                setError('Failed to load datasets. Please refresh the page.');
-                console.error('Error fetching datasets:', err);
+                console.error('Dataset Fetch Error:', err);
+                setError('Failed to load datasets.');
             } finally {
                 setLoading(false);
             }

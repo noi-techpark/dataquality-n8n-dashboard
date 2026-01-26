@@ -4,6 +4,12 @@ export const API_CONFIG = {
     LOGIN_AUTH: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/auth',
     LOGIN_TOKEN: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/token',
     PAGE_SIZE: 1000,
+
+    // Keycloak Configuration
+    KEYCLOAK_URL: 'https://auth.opendatahub.testingmachine.eu/auth',
+    KEYCLOAK_REALM: 'noi',
+    KEYCLOAK_CLIENT_ID: 'n8n',
+    KEYCLOAK_REDIRECT_URI: window.location.origin + '/silent-check-sso.html',
 };
 export const CHART_COLORS = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 
