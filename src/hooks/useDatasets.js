@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { API_CONFIG } from '../utils/constants';
-import { useAuth } from './useAuth';
-import { auth } from '../utils/auth'; // Keep this for auth.getToken()
 
 const formatDataset = (item) => ({
     value: item.Id,

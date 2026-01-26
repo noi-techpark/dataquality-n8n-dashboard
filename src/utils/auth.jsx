@@ -1,4 +1,3 @@
-import { API_CONFIG } from './constants';
 import { keycloak } from './keycloak';
 
 const listeners = new Set();

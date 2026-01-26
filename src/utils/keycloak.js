@@ -1,13 +1,13 @@
 import Keycloak from 'keycloak-js';
 import { API_CONFIG } from './constants';
 
+import { auth } from './auth';
+
 const KEYCLOAK_CONFIG = {
     url: API_CONFIG.KEYCLOAK_URL,
     realm: API_CONFIG.KEYCLOAK_REALM,
     clientId: API_CONFIG.KEYCLOAK_CLIENT_ID,
 };
-
-console.log('Keycloak Config:', KEYCLOAK_CONFIG);
 
 export const keycloak = new Keycloak(KEYCLOAK_CONFIG);
 
@@ -18,7 +18,6 @@ keycloak
         pkceMethod: 'S256',
     })
     .then((authenticated) => {
-        console.log(`Keycloak Initialized. Authenticated: ${authenticated}`);
         auth._refresh();
 
         setInterval(() => {

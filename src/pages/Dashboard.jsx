@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
 import { useFetchDatasets } from '../hooks/useDatasets';
@@ -15,8 +16,6 @@ import ChartsGrid from '../components/dashboard/ChartsGrid.jsx';
 
 // Styles
 import './Dashboard.css';
-
-import { useAuth } from '../hooks/useAuth';
 
 const InteractiveDashboard = () => {
   const [selectedDataset, setSelectedDataset] = useState('');
@@ -80,8 +79,9 @@ const InteractiveDashboard = () => {
       <div className="dashboard-wrapper">
         <div className="header">
           <div className="header-content">
-            <div className="header-left">
-              <h1>Interactive Data Quality Dashboard</h1>
+            <div className="header-spacer"></div>
+            <div className="header-center">
+              <h1 style={{ textAlign: 'center' }}>Interactive Data Quality Dashboard</h1>
               <p>Select a dataset or enter a custom API URL to analyze data quality</p>
             </div>
             <div className="user-section">

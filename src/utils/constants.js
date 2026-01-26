@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-    METADATA_URL: 'https://tourism.api.opendatahub.com/v1/MetaData?pagesize=1000&origin=webcomp-datasets-list',
+    METADATA_URL: 'https://tourism.api.opendatahub.com/v1/MetaData?pagesize=1000&origin=interactive-dashboard',
     N8N_WEBHOOK_URL: 'https://kaiozwald.app.n8n.cloud/webhook/data-quality',
     LOGIN_AUTH: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/auth',
     LOGIN_TOKEN: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/token',
