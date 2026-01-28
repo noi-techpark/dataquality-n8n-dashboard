@@ -2,44 +2,47 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MDBBtn } from 'mdb-react-ui-kit';
 import { auth } from '../utils/auth';
-import { keycloak } from '../utils/keycloak';
+import { keycloak, initKeycloak } from '../utils/keycloak';
 
 import './LoginPage.css';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    // Set up Keycloak lifecycle hooks
-    keycloak.onAuthSuccess = () => {
-      if (auth.isAuthenticated()) {
-        navigate('/dashboard');
-      }
-    };
+    // Initialize Keycloak
+    initKeycloak()
+      .then((authenticated) => {
+        setIsReady(true);
 
-    keycloak.onAuthError = (error) => {
-      console.error('Keycloak Auth Error:', error);
-      setError('Authentication failed. Please try again.');
-      setIsLoading(false);
-    };
+        // Set up Keycloak lifecycle hooks
+        keycloak.onAuthSuccess = () => {
+          if (auth.isAuthenticated()) {
+            navigate('/dashboard');
+          }
+        };
 
-    keycloak.onReady = (authenticated) => {
-      setIsReady(true);
-      if (authenticated || auth.isAuthenticated()) {
-        navigate('/dashboard');
-      }
-    };
+        keycloak.onAuthError = (error) => {
+          console.error('Keycloak Auth Error:', error);
+          setError('Authentication failed. Please try again.');
+          setIsLoading(false);
+        };
 
-    // Check if already authenticated (Keycloak might already be initialized)
-    const authenticated = auth.isAuthenticated();
-
-    if (authenticated) {
-      navigate('/dashboard');
-    }
+        // If already authenticated, redirect to dashboard
+        if (authenticated || auth.isAuthenticated()) {
+          navigate('/dashboard');
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to initialize Keycloak:', err);
+        setError('Failed to connect to authentication server. Please refresh the page.');
+        setIsReady(true); // Still show the UI even if Keycloak fails
+      });
   }, [navigate]);
 
   const handleLogin = () => {
@@ -108,13 +111,23 @@ export default function LoginPage() {
 
             <MDBBtn
               className="w-100 btn-secondary-custom"
-              onClick={() => {
+              onClick={async () => {
+                setIsGuestLoading(true);
                 auth.loginAsGuest();
+                // Brief delay to show loader and provide smooth transition
+                await new Promise(resolve => setTimeout(resolve, 800));
                 navigate('/dashboard');
               }}
-              disabled={isLoading}
+              disabled={isLoading || isGuestLoading}
             >
-              Continue as Guest
+              {isGuestLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Logging in...
+                </>
+              ) : (
+                'Continue as Guest'
+              )}
             </MDBBtn>
           </div>
         )}
