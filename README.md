@@ -1,4 +1,4 @@
-# N8N_ODH_Dashboard
+# Open_Data_Hub_Dashboard
 This is the repository for the Open Data Hub Dashboard, created using React and n8n workflow.
 
 ## Table of Contents
@@ -41,12 +41,6 @@ npm run build
 The result, found in the `./dist` folder, can be deployed to a web server.
 
 ## Information
-
-### Support
-For support, please contact NOI Techpark Südtirol - Alto Adige.
-
-### Contributing
-Please take a look at the Contributor Guidelines.
 
 ### Authors
 - NOI Techpark Südtirol - Alto Adige
