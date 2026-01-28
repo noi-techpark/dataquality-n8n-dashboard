@@ -1,6 +1,4 @@
 # N8N_ODH_Dashboard
-REUSE Compliance
-
 This is the repository for the Open Data Hub Dashboard, created using React and n8n workflow.
 
 ## Table of Contents
@@ -49,9 +47,6 @@ For support, please contact NOI Techpark Südtirol - Alto Adige.
 
 ### Contributing
 Please take a look at the Contributor Guidelines.
-
-### Versioning
-This project uses SemVer for versioning. For the versions available, see the tags on this repository.
 
 ### Authors
 - NOI Techpark Südtirol - Alto Adige
