@@ -1,0 +1,6 @@
+{
+    "apiUrl": "https://tourism.api.opendatahub.com/v1/MetaData",
+    "dataset": "Test",
+    "pagesize": 10,
+    "test": true
+}

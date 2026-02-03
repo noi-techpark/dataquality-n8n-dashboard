@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
@@ -28,7 +28,7 @@ const InteractiveDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { datasets, loading: datasetsLoading, error: datasetsError } = useFetchDatasets();
+  const { datasets, loading: datasetsLoading, error: datasetsError, isAuthenticated } = useFetchDatasets();
 
   const handleLogout = () => {
     auth.logout();
@@ -47,17 +47,51 @@ const InteractiveDashboard = () => {
         throw new Error('Please select a dataset or provide a valid API URL');
       }
 
+      // Get fresh token before making request
+      let token = auth.getToken();
+
+      // Refresh token if authenticated and needed
+      if (isAuthenticated && !auth.isGuestUser()) {
+        token = await auth.refreshToken() || token;
+      }
+
+      // Prepare headers for n8n webhook
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      // Add authentication header if we have a token
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Debug info to verify token transmission
+      console.log('--- DATA QUALITY DEBUG ---');
+      console.log('N8N Webhook URL:', API_CONFIG.N8N_WEBHOOK_URL);
+      console.log('Data API Source:', apiUrl);
+      if (token) {
+        console.log('Token found! Starts with:', token);
+        console.log('MANUAL TEST COMMAND (Copy & Paste to your terminal):');
+        console.log(`curl -i -H "Authorization: Bearer ${token}" "${apiUrl}"`);
+      } else {
+        console.warn('NO TOKEN FOUND - Running as guest');
+      }
+
       const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify({
           apiUrl,
           dataset: selectedDataset || 'Custom',
-          pagesize: API_CONFIG.PAGE_SIZE
+          pagesize: API_CONFIG.PAGE_SIZE,
+          token: token || '',
+          isAuthenticated: !!token && !auth.isGuestUser()
         })
       });
+
+      if (response.status === 401) {
+        throw new Error('Authentication expired. Please login again.');
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP status: ${response.status}`);
@@ -69,6 +103,14 @@ const InteractiveDashboard = () => {
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please try again.');
       console.error('Error generating report:', err);
+
+      // If authentication error, redirect to login
+      if (err.message.toLowerCase().includes('authentication') || err.message.includes('401')) {
+        setTimeout(() => {
+          auth.logout();
+          navigate('/');
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -108,6 +150,7 @@ const InteractiveDashboard = () => {
           setUseCustomUrl={setUseCustomUrl}
           loading={loading}
           onGenerate={generateReport}
+          isAuthenticated={isAuthenticated}
         />
 
         {(error || datasetsError) && <ErrorMessage message={error || datasetsError} />}

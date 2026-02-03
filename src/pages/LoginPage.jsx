@@ -9,7 +9,6 @@ import './LoginPage.css';
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   const navigate = useNavigate();
@@ -111,23 +110,13 @@ export default function LoginPage() {
 
             <MDBBtn
               className="w-100 btn-secondary-custom"
-              onClick={async () => {
-                setIsGuestLoading(true);
+              onClick={() => {
                 auth.loginAsGuest();
-                // Brief delay to show loader and provide smooth transition
-                await new Promise(resolve => setTimeout(resolve, 800));
                 navigate('/dashboard');
               }}
-              disabled={isLoading || isGuestLoading}
+              disabled={isLoading}
             >
-              {isGuestLoading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Logging in...
-                </>
-              ) : (
-                'Continue as Guest'
-              )}
+              Continue as Guest
             </MDBBtn>
           </div>
         )}

@@ -1,94 +1,121 @@
 import { keycloak } from './keycloak';
 
-const listeners = new Set();
-const notify = () => listeners.forEach(l => l());
+class Auth {
+  constructor() {
+    this.listeners = new Set();
+  }
 
-export const auth = {
-  // Subscribe to auth changes
-  subscribe: (listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  },
+  subscribe(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
 
-  // Check if user is authenticated
-  isAuthenticated: () => {
-    return !!keycloak.authenticated || !!localStorage.getItem('user');
-  },
+  notify() {
+    this.listeners.forEach(l => l());
+    window.dispatchEvent(new CustomEvent('auth-changed'));
+  }
 
-  // Get current user info
-  getUser: () => {
-    if (!keycloak.tokenParsed) {
-      // Fallback to guest if not authenticated
-      const guestUser = localStorage.getItem('user');
-      return guestUser ? JSON.parse(guestUser) : null;
+  isAuthenticated() {
+    return !!keycloak.authenticated || this.isGuestUser();
+  }
+
+  isGuestUser() {
+    return localStorage.getItem('guestMode') === 'true';
+  }
+
+  getToken() {
+    if (this.isGuestUser()) {
+      return null;
     }
+    return keycloak.token;
+  }
+
+  getRefreshToken() {
+    return keycloak.refreshToken;
+  }
+
+  async refreshToken() {
+    try {
+      const refreshed = await keycloak.updateToken(30);
+      if (refreshed) {
+        console.log('Token refreshed');
+        this.notify();
+      }
+      return keycloak.token;
+    } catch (error) {
+      console.error('Failed to refresh token', error);
+      this.logout();
+      return null;
+    }
+  }
+
+  getUser() {
+    if (this.isGuestUser()) {
+      return {
+        name: 'Guest User',
+        email: 'guest@dashboard.local',
+        isGuest: true,
+        role: 'guest'
+      };
+    }
+
+    if (!keycloak.tokenParsed) return null;
 
     return {
       name: keycloak.tokenParsed.name || keycloak.tokenParsed.preferred_username || 'Authenticated User',
       email: keycloak.tokenParsed.email,
-      role: 'user'
+      role: 'user',
+      isGuest: false
     };
-  },
+  }
 
-  // Login function
-  login: () => {
+  login() {
     keycloak.login({
       redirectUri: window.location.origin + '/dashboard'
     });
-  },
+  }
 
-  // Register function
-  register: () => {
+  register() {
     keycloak.register({
       redirectUri: window.location.origin + '/dashboard'
     });
-  },
+  }
 
-  // Logout function
-  logout: () => {
-    // Clear guest session
-    localStorage.removeItem('authToken');
+  loginAsGuest() {
+    localStorage.setItem('guestMode', 'true');
+    localStorage.setItem('user', JSON.stringify({ name: 'Guest User', role: 'guest' }));
+    this.notify();
+  }
+
+  logout() {
+    localStorage.removeItem('guestMode');
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
 
-    // Clear Keycloak session if authenticated
     if (keycloak.authenticated) {
       keycloak.logout({
         redirectUri: window.location.origin
       });
     } else {
-      // For guest users, just redirect to home
       window.location.href = window.location.origin;
     }
-    notify();
-  },
-
-  // Get Keycloak Account Management URL
-  getAccountUrl: () => {
-    return keycloak.createAccountUrl();
-  },
-
-  // Guest login functions
-  loginAsGuest: () => {
-    const data = {
-      token: 'guest-access-token',
-      user: {
-        name: 'Guest User',
-        role: 'guest'
-      }
-    };
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    keycloak.clearToken();
-    notify();
-  },
-
-  // Get auth token for API calls
-  getToken: () => {
-    return keycloak.token || localStorage.getItem('authToken');
-  },
-
-  // INTERNAL: Called by Keycloak lifecycle
-  _refresh: () => {
-    notify();
+    this.notify();
   }
-};
+
+  // Auto-refresh token before it expires
+  setupTokenRefresh() {
+    setInterval(async () => {
+      if (keycloak.authenticated) {
+        await this.refreshToken();
+      }
+    }, 60000); // Check every minute
+  }
+
+  // Internal: Hook for Keycloak
+  _refresh() {
+    this.notify();
+  }
+}
+
+export const auth = new Auth();
+auth.setupTokenRefresh();
