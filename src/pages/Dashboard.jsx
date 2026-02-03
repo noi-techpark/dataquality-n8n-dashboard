@@ -65,17 +65,6 @@ const InteractiveDashboard = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Debug info to verify token transmission
-      console.log('--- DATA QUALITY DEBUG ---');
-      console.log('N8N Webhook URL:', API_CONFIG.N8N_WEBHOOK_URL);
-      console.log('Data API Source:', apiUrl);
-      if (token) {
-        console.log('Token found! Starts with:', token);
-        console.log('MANUAL TEST COMMAND (Copy & Paste to your terminal):');
-        console.log(`curl -i -H "Authorization: Bearer ${token}" "${apiUrl}"`);
-      } else {
-        console.warn('NO TOKEN FOUND - Running as guest');
-      }
 
       const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
         method: 'POST',

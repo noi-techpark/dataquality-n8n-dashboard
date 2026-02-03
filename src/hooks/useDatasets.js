@@ -42,7 +42,6 @@ export const useFetchDatasets = () => {
                 const authenticated = auth.isAuthenticated();
                 setIsAuthenticated(authenticated);
 
-                console.log(`[DEBUG] Fetching datasets from: ${API_CONFIG.METADATA_URL}`);
                 const response = await fetch(API_CONFIG.METADATA_URL);
 
                 if (!response.ok) {
