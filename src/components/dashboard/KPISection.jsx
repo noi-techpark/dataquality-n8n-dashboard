@@ -11,32 +11,38 @@ const KPISection = ({ data }) => {
         return null;
     }
 
+    const getStatus = (score) => {
+        if (score >= 80) return 'success';
+        if (score >= 60) return 'warning';
+        return 'danger';
+    };
+
     return (
         <div className="kpi-grid">
             <KPICard
                 title="Overall Quality"
                 value={data.kpis.qualityScore}
                 suffix="/100"
-                isGood={data.kpis.qualityScore >= 80}
+                status={getStatus(data.kpis.qualityScore)}
                 icon={CheckCircle}
             />
             <KPICard
                 title="Total Records"
                 value={data.kpis.totalRecords.toLocaleString()}
-                isGood={true}
+                status="success"
                 icon={Database}
             />
             <KPICard
                 title="Completeness"
                 value={data.kpis.completenessScore}
                 suffix="%"
-                isGood={data.kpis.completenessScore >= 80}
+                status={getStatus(data.kpis.completenessScore)}
                 icon={TrendingUp}
             />
             <KPICard
                 title="Critical Fields"
                 value={data.kpis.criticalFields}
-                isGood={false}
+                status={data.kpis.criticalFields > 0 ? 'danger' : 'success'}
                 icon={AlertCircle}
             />
         </div>

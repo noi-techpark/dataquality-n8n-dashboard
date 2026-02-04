@@ -244,19 +244,27 @@ input[type="text"]:disabled {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
-.kpi-card.good {
+.kpi-card.success {
     border-bottom: 3px solid #10b981;
 }
 
-.kpi-card.good .kpi-icon {
+.kpi-card.success .kpi-icon {
     color: #10b981;
 }
 
 .kpi-card.warning {
-    border-bottom: 3px solid #ef4444;
+    border-bottom: 3px solid #f59e0b;
 }
 
 .kpi-card.warning .kpi-icon {
+    color: #f59e0b;
+}
+
+.kpi-card.danger {
+    border-bottom: 3px solid #ef4444;
+}
+
+.kpi-card.danger .kpi-icon {
     color: #ef4444;
 }
 
