@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 import React from 'react';
 import { CheckCircle, Database, TrendingUp, AlertCircle } from 'lucide-react';
 import KPICard from './KPICard';

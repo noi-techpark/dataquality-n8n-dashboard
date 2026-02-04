@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 export const API_CONFIG = {
     METADATA_URL: 'https://tourism.api.opendatahub.testingmachine.eu/v1/MetaData?pagesize=1000&origin=interactive-dashboard',
     N8N_WEBHOOK_URL: 'http://localhost:5678/webhook/data-quality',
