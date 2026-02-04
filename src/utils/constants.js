@@ -1,8 +1,7 @@
 export const API_CONFIG = {
     METADATA_URL: 'https://tourism.api.opendatahub.testingmachine.eu/v1/MetaData?pagesize=1000&origin=interactive-dashboard',
     N8N_WEBHOOK_URL: 'http://localhost:5678/webhook/data-quality',
-    LOGIN_AUTH: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/auth',
-    LOGIN_TOKEN: 'https://auth.opendatahub.testingmachine.eu/auth/realms/noi/protocol/openid-connect/token',
+
     PAGE_SIZE: 1000,
 
     // Keycloak Configuration

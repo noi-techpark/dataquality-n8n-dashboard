@@ -12,12 +12,12 @@ const ChartsGrid = ({ data }) => (
         <div className="chart-container">
             <h3>Top Fields with Missing Data</h3>
             <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.topMissingFields} layout="vertical">
+                <BarChart data={data.topMissingFields.slice(0, 10)} layout="vertical" barSize={20}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" domain={[0, 100]} />
-                    <YAxis dataKey="name" type="category" width={150} />
+                    <YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 12 }} interval={0} />
                     <Tooltip />
-                    <Bar dataKey="value" fill={STATUS_COLORS.danger} radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="value" fill={STATUS_COLORS.danger} radius={[0, 4, 4, 0]} />
                 </BarChart>
             </ResponsiveContainer>
         </div>

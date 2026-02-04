@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Lock } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
@@ -12,6 +12,7 @@ import ErrorMessage from '../components/common/ErrorMessage.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 import ControlsPanel from '../components/dashboard/ControlsPanel.jsx';
 import KPISection from '../components/dashboard/KPISection.jsx';
+import AttributeCompletenessTable from '../components/dashboard/AttributeCompletenessTable.jsx';
 import ChartsGrid from '../components/dashboard/ChartsGrid.jsx';
 
 // Styles
@@ -87,6 +88,7 @@ const InteractiveDashboard = () => {
       }
 
       const data = await response.json();
+
       setDashboardData(data);
 
     } catch (err) {
@@ -148,6 +150,7 @@ const InteractiveDashboard = () => {
         {!loading && dashboardData && (
           <>
             <KPISection data={dashboardData} />
+            <AttributeCompletenessTable data={dashboardData} />
             <ChartsGrid data={dashboardData} />
           </>
         )}

@@ -38,7 +38,7 @@ class Auth {
     try {
       const refreshed = await keycloak.updateToken(30);
       if (refreshed) {
-        console.log('Token refreshed');
+
         this.notify();
       }
       return keycloak.token;
