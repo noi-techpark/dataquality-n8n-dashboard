@@ -9,7 +9,9 @@ import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const basename = import.meta.env.BASE_URL;
+  // Ensure basename is absolute. If it starts with ./ or is empty, default to /
+  const rawBasename = import.meta.env.BASE_URL;
+  const basename = (rawBasename === './' || rawBasename === '/./') ? '/' : rawBasename;
 
   return (
     <BrowserRouter basename={basename}>
