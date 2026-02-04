@@ -12,7 +12,7 @@ export const API_CONFIG = {
     KEYCLOAK_URL: import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.opendatahub.testingmachine.eu/auth',
     KEYCLOAK_REALM: import.meta.env.VITE_KEYCLOAK_REALM || 'noi',
     KEYCLOAK_CLIENT_ID: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'n8n',
-    KEYCLOAK_REDIRECT_URI: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI || (window.location.origin + '/silent-check-sso.html'),
+    KEYCLOAK_REDIRECT_URI: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI || (window.location.origin),
 };
 export const CHART_COLORS = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 
