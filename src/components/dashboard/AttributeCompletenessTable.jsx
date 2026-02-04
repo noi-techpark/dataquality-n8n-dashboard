@@ -6,15 +6,8 @@ const AttributeCompletenessTable = ({ data }) => {
     const [sortConfig, setSortConfig] = useState({ key: 'completeness', direction: 'desc' });
     const [showAll, setShowAll] = useState(false);
 
-    // Get completeness data from topMissingFields (which shows worst fields)
-    const attributes = data?.topMissingFields || [];
-
-    // Convert to completeness format (with null safety)
-    const completenessData = attributes.map(field => ({
-        name: field.name || 'Unknown',
-        completeness: typeof field.value === 'number' ? 100 - field.value : 0,
-        missing: typeof field.value === 'number' ? field.value : 0
-    }));
+    // Use the pre-calculated field completeness data from n8n
+    const completenessData = data?.fieldCompleteness || [];
 
     const handleSort = (key) => {
         setSortConfig(prev => ({
