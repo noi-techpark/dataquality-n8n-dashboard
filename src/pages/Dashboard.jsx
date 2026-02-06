@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
 import { useFetchDatasets } from '../hooks/useDatasets';
+import { createAnalysisState, processChunk, generateFinalReport, generateEmptyReport } from '../utils/analysis';
 
 // Components
 import LoadingOverlay from '../components/common/LoadingOverlay.jsx';
@@ -29,6 +30,7 @@ const InteractiveDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dashboardData, setDashboardData] = useState(null);
+  const [fetchProgress, setFetchProgress] = useState(0);
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,7 +44,8 @@ const InteractiveDashboard = () => {
   const generateReport = async () => {
     setLoading(true);
     setError('');
-    setDashboardData(null);
+    setDashboardData(null); // Hide dashboard at start
+    setFetchProgress(0);
 
     try {
       const apiUrl = useCustomUrl
@@ -53,55 +56,83 @@ const InteractiveDashboard = () => {
         throw new Error('Please select a dataset or provide a valid API URL');
       }
 
-      // Get fresh token before making request
-      let token = auth.getToken();
+      // Step 1: Initialize Analysis State
+      let state = createAnalysisState();
+      let completedPages = 0;
+      let currentPage = 1;
 
-      // Refresh token if authenticated and needed
-      if (isAuthenticated && !auth.isGuestUser()) {
-        token = await auth.refreshToken() || token;
-      }
+      const fetchPage = async (p) => {
+        const pageUrl = new URL(apiUrl);
+        pageUrl.searchParams.set('pagesize', API_CONFIG.PAGE_SIZE.toString());
+        pageUrl.searchParams.set('pagenumber', p.toString());
 
-      // Prepare headers for n8n webhook
-      const headers = {
-        'Content-Type': 'application/json'
+        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiUrl: pageUrl.toString(),
+            token: auth.getToken() || '',
+            origin: 'interactive-dashboard-stream'
+          })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status} on page ${p}`);
+        return response.json();
       };
 
-      // Add authentication header if we have a token
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      // Step 2: Fetch Page 1 (This runs while showing the large spinner)
+      console.log(`[Stream] Starting instant-fetch with Page 1: ${apiUrl}`);
+      const firstPageData = await fetchPage(1);
+      const firstRecords = firstPageData.Items || firstPageData.items || [];
+
+      if (firstRecords.length === 0) {
+        throw new Error('No data found for this dataset.');
       }
 
+      // Determine total scope from first page metadata
+      const totalResults = firstPageData.TotalResults || firstPageData.total || firstRecords.length;
+      const totalPages = Math.max(1, Math.ceil(totalResults / API_CONFIG.PAGE_SIZE));
 
-      const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          apiUrl,
-          dataset: selectedDataset || 'Custom',
-          pagesize: API_CONFIG.PAGE_SIZE,
-          token: token || '',
-          isAuthenticated: !!token && !auth.isGuestUser()
-        })
-      });
+      console.log(`[Stream] Total detected: ${totalResults} records across ${totalPages} pages.`);
 
-      if (!response.ok) {
-        throw new Error(`n8n Analysis failed (HTTP ${response.status})`);
+      // Process Page 1 and SHOW Dashboard
+      state = processChunk(state, firstRecords);
+      completedPages = 1;
+      currentPage = 2;
+
+      setFetchProgress(Math.round((completedPages / totalPages) * 100));
+      setDashboardData(generateFinalReport(state)); // dashboard layout appears now
+
+      // Step 3: Stream remaining pages in parallel
+      if (totalPages > 1) {
+        const CONCURRENCY_LIMIT = 3;
+
+        const worker = async () => {
+          while (currentPage <= totalPages) {
+            const pageNumber = currentPage++;
+            if (pageNumber > totalPages) break;
+
+            try {
+              const data = await fetchPage(pageNumber);
+              const records = data.Items || data.items || [];
+
+              state = processChunk(state, records);
+              completedPages++;
+
+              setFetchProgress(Math.round((completedPages / totalPages) * 100));
+              setDashboardData(generateFinalReport(state));
+            } catch (err) {
+              console.error(`[Stream] Worker failed on page ${pageNumber}:`, err);
+            }
+          }
+        };
+
+        const workers = Array.from({ length: CONCURRENCY_LIMIT }, () => worker());
+        await Promise.all(workers);
       }
 
-      const responseText = await response.text();
-
-      // Handle cases where the API or n8n returns an empty body (e.g., no data found)
-      if (!responseText || responseText.trim() === '') {
-        throw new Error('No data found for this dataset or the analysis result was empty.');
-      }
-
-      try {
-        const data = JSON.parse(responseText);
-        setDashboardData(data);
-      } catch (e) {
-        console.error('[JSON Parse Error] Raw text:', responseText);
-        throw new Error('Received invalid data format from the analysis engine.');
-      }
+      setLoading(false);
+      console.log('[Stream] Progressive analysis complete.');
 
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please try again.');
@@ -157,16 +188,27 @@ const InteractiveDashboard = () => {
         />
 
         {(error || datasetsError) && <ErrorMessage message={error || datasetsError} />}
-        {loading && <LoadingOverlay />}
 
-        {!loading && dashboardData && (
+        {/* State 1: Initial full-screen loading (circular spinner) */}
+        {loading && !dashboardData && <LoadingOverlay progress={fetchProgress} />}
+
+        {/* State 2: Show results as they come in */}
+        {dashboardData && (
           <>
+            {/* Show a progress indicator while fetching */}
+            {loading && (
+              <div style={{ marginBottom: '20px' }}>
+                <LoadingOverlay progress={fetchProgress} isCompact={dashboardData.kpis.totalRecords > 0} />
+              </div>
+            )}
+
             <KPISection data={dashboardData} />
             <AttributeCompletenessTable data={dashboardData} />
             <ChartsGrid data={dashboardData} />
           </>
         )}
 
+        {/* State 2: Idle / No request yet */}
         {!loading && !dashboardData && !error && <EmptyState />}
       </div>
     </div>
