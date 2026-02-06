@@ -42,6 +42,7 @@ const InteractiveDashboard = () => {
   const generateReport = async () => {
     setLoading(true);
     setError('');
+    setDashboardData(null);
 
     try {
       const apiUrl = useCustomUrl
@@ -83,17 +84,24 @@ const InteractiveDashboard = () => {
         })
       });
 
-      if (response.status === 401) {
-        throw new Error('Authentication expired. Please login again.');
-      }
-
       if (!response.ok) {
-        throw new Error(`HTTP status: ${response.status}`);
+        throw new Error(`n8n Analysis failed (HTTP ${response.status})`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
 
-      setDashboardData(data);
+      // Handle cases where the API or n8n returns an empty body (e.g., no data found)
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('No data found for this dataset or the analysis result was empty.');
+      }
+
+      try {
+        const data = JSON.parse(responseText);
+        setDashboardData(data);
+      } catch (e) {
+        console.error('[JSON Parse Error] Raw text:', responseText);
+        throw new Error('Received invalid data format from the analysis engine.');
+      }
 
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please try again.');
