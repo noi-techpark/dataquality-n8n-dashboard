@@ -9,7 +9,14 @@ import { useAuth } from '../hooks/useAuth';
 import { auth } from '../utils/auth';
 import { API_CONFIG } from '../utils/constants';
 import { useFetchDatasets } from '../hooks/useDatasets';
-import { createAnalysisState, processChunk, generateFinalReport, generateEmptyReport } from '../utils/analysis';
+import {
+  createAnalysisState,
+  processChunk,
+  generateFinalReport,
+  generateEmptyReport,
+  extractRecordsFromResponse,
+  extractPaginationInfo
+} from '../utils/analysis';
 
 // Components
 import LoadingOverlay from '../components/common/LoadingOverlay.jsx';
@@ -44,7 +51,7 @@ const InteractiveDashboard = () => {
   const generateReport = async () => {
     setLoading(true);
     setError('');
-    setDashboardData(null); // Hide dashboard at start
+    setDashboardData(null);
     setFetchProgress(0);
 
     try {
@@ -56,56 +63,131 @@ const InteractiveDashboard = () => {
         throw new Error('Please select a dataset or provide a valid API URL');
       }
 
-      // Step 1: Initialize Analysis State
+      console.log(`Starting analysis for: ${apiUrl}`);
+
+      // Initialize the tracking state for the analysis
       let state = createAnalysisState();
       let completedPages = 0;
       let currentPage = 1;
 
-      const fetchPage = async (p) => {
-        const pageUrl = new URL(apiUrl);
-        pageUrl.searchParams.set('pagesize', API_CONFIG.PAGE_SIZE.toString());
-        pageUrl.searchParams.set('pagenumber', p.toString());
+      /**
+       * Core fetch function with adaptive fallbacks for authentication and rate limits.
+       * If a request fails, it automatically retries without a token or parameters to ensure we get data.
+       */
+      const fetchPage = async (pageNumber, options = { useToken: true, useParams: true }) => {
+        const urlObj = new URL(apiUrl);
+
+        // Use conservative page sizes for non-tourism APIs to prevent timeouts
+        const isTourismApi = urlObj.hostname.includes('tourism.api.opendatahub');
+        const defaultPageSize = isTourismApi ? API_CONFIG.PAGE_SIZE : 100;
+
+        if (options.useParams) {
+          const existingLimit = urlObj.searchParams.get('limit') || urlObj.searchParams.get('pagesize') || urlObj.searchParams.get('rows');
+          const pageSize = existingLimit ? parseInt(existingLimit) : defaultPageSize;
+          const usesPagenumber = urlObj.searchParams.has('pagenumber') || urlObj.searchParams.has('PageNumber');
+
+          if (usesPagenumber) {
+            urlObj.searchParams.set('pagenumber', pageNumber.toString());
+            if (!urlObj.searchParams.get('pagesize')) urlObj.searchParams.set('pagesize', pageSize.toString());
+          } else {
+            urlObj.searchParams.set('offset', ((pageNumber - 1) * pageSize).toString());
+            if (!urlObj.searchParams.get('limit')) urlObj.searchParams.set('limit', pageSize.toString());
+          }
+        }
+
+        // Send auth token only for OpenDataHub domains
+        const isOdhDomain = urlObj.hostname.includes('opendatahub') || urlObj.hostname.includes('testingmachine.eu');
+        const tokenValue = (options.useToken && isOdhDomain) ? auth.getToken() : null;
+
+        console.log(`Fetching page ${pageNumber} (Auth: ${!!tokenValue ? 'Yes' : 'No'}, Params: ${options.useParams})`);
 
         const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            apiUrl: pageUrl.toString(),
-            token: auth.getToken() || '',
-            origin: 'interactive-dashboard-stream'
+            apiUrl: urlObj.toString(),
+            token: tokenValue || undefined,
+            origin: 'interactive-dashboard-universal'
           })
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status} on page ${p}`);
+        if (!response.ok) {
+          const status = response.status;
+          let errorDetail = '';
+          try {
+            const errorJson = await response.json();
+            errorDetail = typeof errorJson === 'object' ? JSON.stringify(errorJson) : errorJson;
+          } catch (e) {
+            errorDetail = await response.text().catch(() => 'Unknown error');
+          }
+
+          // Handle the "Error in workflow" case gracefully as requested (means empty or 404 usually)
+          if (status === 500 && errorDetail.includes('Error in workflow')) {
+            console.warn(`N8N workflow error detected. Treating as empty dataset for: ${urlObj.toString()}`);
+            return [];
+          }
+
+          // Recovery logic for the first page
+          if (pageNumber === 1) {
+            // Try again without the token if we were authenticated
+            if (options.useToken && auth.isAuthenticated()) {
+              console.log('Retrying without auth token...');
+              return fetchPage(1, { useToken: false, useParams: options.useParams });
+            }
+
+            // Try again without any parameters
+            if (options.useParams) {
+              console.log('Retrying without pagination parameters...');
+              return fetchPage(1, { useToken: options.useToken, useParams: false });
+            }
+          }
+
+          console.error(`Webhook error for ${urlObj.toString()}:`, errorDetail);
+          throw new Error(`Server returned ${status}. URL: ${urlObj.toString().slice(0, 50)}... Error: ${errorDetail.slice(0, 100)}`);
+        }
+
         return response.json();
       };
 
-      // Step 2: Fetch Page 1 (This runs while showing the large spinner)
-      console.log(`[Stream] Starting instant-fetch with Page 1: ${apiUrl}`);
+      // Fetch the first page to detect the data structure
+      console.log(`Starting initial fetch...`);
       const firstPageData = await fetchPage(1);
-      const firstRecords = firstPageData.Items || firstPageData.items || [];
 
+      // Extract records and pagination metadata using universal logic
+      const firstRecords = extractRecordsFromResponse(firstPageData);
+      const paginationInfo = extractPaginationInfo(firstPageData, firstRecords);
+
+      console.log(`Structure detected:`, {
+        page1Size: firstRecords.length,
+        total: paginationInfo.totalResults,
+        pages: paginationInfo.totalPages
+      });
+
+      // Handle empty datasets by showing a blank report
       if (firstRecords.length === 0) {
-        throw new Error('No data found for this dataset.');
+        console.warn('No records found. Displaying empty dashboard.');
+        setDashboardData(generateEmptyReport());
+        setLoading(false);
+        return;
       }
 
-      // Determine total scope from first page metadata
-      const totalResults = firstPageData.TotalResults || firstPageData.total || firstRecords.length;
-      const totalPages = Math.max(1, Math.ceil(totalResults / API_CONFIG.PAGE_SIZE));
+      const { totalResults, totalPages } = paginationInfo;
 
-      console.log(`[Stream] Total detected: ${totalResults} records across ${totalPages} pages.`);
-
-      // Process Page 1 and SHOW Dashboard
+      // Process the first chunk immediately for instant UI feedback
       state = processChunk(state, firstRecords);
       completedPages = 1;
       currentPage = 2;
 
       setFetchProgress(Math.round((completedPages / totalPages) * 100));
-      setDashboardData(generateFinalReport(state)); // dashboard layout appears now
+      setDashboardData(generateFinalReport(state));
 
-      // Step 3: Stream remaining pages in parallel
+      console.log(`Page 1 processed. Analysis started.`);
+
+      // Parallelize the remaining pages if the dataset is large
       if (totalPages > 1) {
-        const CONCURRENCY_LIMIT = 3;
+        console.log(`Fetching ${totalPages - 1} remaining pages...`);
+
+        const CONCURRENCY_LIMIT = 5;
 
         const worker = async () => {
           while (currentPage <= totalPages) {
@@ -113,16 +195,22 @@ const InteractiveDashboard = () => {
             if (pageNumber > totalPages) break;
 
             try {
-              const data = await fetchPage(pageNumber);
-              const records = data.Items || data.items || [];
+              const pageData = await fetchPage(pageNumber);
+              const records = extractRecordsFromResponse(pageData);
+
+              if (!records || records.length === 0) {
+                console.warn(`Page ${pageNumber} was empty, stopping worker`);
+                break;
+              }
 
               state = processChunk(state, records);
               completedPages++;
 
-              setFetchProgress(Math.round((completedPages / totalPages) * 100));
+              const progress = Math.round((completedPages / totalPages) * 100);
+              setFetchProgress(progress);
               setDashboardData(generateFinalReport(state));
             } catch (err) {
-              console.error(`[Stream] Worker failed on page ${pageNumber}:`, err);
+              console.error(`Failed to process page ${pageNumber}:`, err);
             }
           }
         };
@@ -132,14 +220,17 @@ const InteractiveDashboard = () => {
       }
 
       setLoading(false);
-      console.log('[Stream] Progressive analysis complete.');
+      console.log(`Analysis complete. Total records: ${state.totalRecords}`);
 
     } catch (err) {
-      setError(err.message || 'Failed to generate report. Please try again.');
-      console.error('Error generating report:', err);
+      setError(err.message || 'Failed to generate report. Please verify the API URL.');
+      console.error('Analysis Error:', err);
+      setDashboardData(null);
 
-      // If authentication error, redirect to login
-      if (err.message.toLowerCase().includes('authentication') || err.message.includes('401')) {
+      // Redirect to login if session expired (401/403)
+      if (err.message.toLowerCase().includes('authentication') ||
+        err.message.includes('401') ||
+        err.message.includes('403')) {
         setTimeout(() => {
           auth.logout();
           navigate('/');
@@ -157,8 +248,8 @@ const InteractiveDashboard = () => {
           <div className="header-content">
             <div className="header-spacer"></div>
             <div className="header-center">
-              <h1 style={{ textAlign: 'center' }}>Interactive Data Quality Dashboard</h1>
-              <p>Select a dataset or enter a custom API URL to analyze data quality</p>
+              <h1 style={{ textAlign: 'center' }}>Universal Data Quality Dashboard</h1>
+              <p>Detects data structure and calculates quality metrics automatically</p>
             </div>
             <div className="user-section">
               <div className="user-info">
@@ -189,16 +280,19 @@ const InteractiveDashboard = () => {
 
         {(error || datasetsError) && <ErrorMessage message={error || datasetsError} />}
 
-        {/* State 1: Initial full-screen loading (circular spinner) */}
+        {/* Loading state before first results appear */}
         {loading && !dashboardData && <LoadingOverlay progress={fetchProgress} />}
 
-        {/* State 2: Show results as they come in */}
+        {/* Dynamic results shown as data streams in */}
         {dashboardData && (
           <>
-            {/* Show a progress indicator while fetching */}
+            {/* Progress bar during background fetching */}
             {loading && (
               <div style={{ marginBottom: '20px' }}>
-                <LoadingOverlay progress={fetchProgress} isCompact={dashboardData.kpis.totalRecords > 0} />
+                <LoadingOverlay
+                  progress={fetchProgress}
+                  isCompact={dashboardData.kpis.totalRecords > 0}
+                />
               </div>
             )}
 
@@ -208,7 +302,7 @@ const InteractiveDashboard = () => {
           </>
         )}
 
-        {/* State 2: Idle / No request yet */}
+        {/* Handle cases where no report has been run yet */}
         {!loading && !dashboardData && !error && <EmptyState />}
       </div>
     </div>
