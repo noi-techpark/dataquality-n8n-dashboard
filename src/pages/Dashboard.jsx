@@ -48,6 +48,25 @@ const InteractiveDashboard = () => {
     auth.logout();
   };
 
+  /**
+   * Translates technical backend errors into clear, stakeholder-friendly messages.
+   */
+  const getFriendlyErrorMessage = (status, detail) => {
+    if (detail.includes('Error in workflow')) {
+      return "The analysis encountered an issue while processing the data. This usually happens when the dataset is empty, unavailable, or requires special access.";
+    }
+    if (status === 401 || status === 403) {
+      return "Access denied: Your session may have expired or you lack the required permissions for this dataset.";
+    }
+    if (status === 404) {
+      return "Data source not found: The requested URL or dataset selection could not be located.";
+    }
+    if (status >= 500) {
+      return "Server error: The analysis engine is experiencing a temporary problem. Please try again shortly.";
+    }
+    return "An unexpected error occurred. Please verify the URL or contact the technical team.";
+  };
+
   const generateReport = async () => {
     setLoading(true);
     setError('');
@@ -121,11 +140,6 @@ const InteractiveDashboard = () => {
             errorDetail = await response.text().catch(() => 'Unknown error');
           }
 
-          // Handle the "Error in workflow" case gracefully as requested (means empty or 404 usually)
-          if (status === 500 && errorDetail.includes('Error in workflow')) {
-            console.warn(`N8N workflow error detected. Treating as empty dataset for: ${urlObj.toString()}`);
-            return [];
-          }
 
           // Recovery logic for the first page
           if (pageNumber === 1) {
@@ -142,8 +156,8 @@ const InteractiveDashboard = () => {
             }
           }
 
-          console.error(`Webhook error for ${urlObj.toString()}:`, errorDetail);
-          throw new Error(`Server returned ${status}. URL: ${urlObj.toString().slice(0, 50)}... Error: ${errorDetail.slice(0, 100)}`);
+          console.error(`Technical error for ${urlObj.toString()}:`, errorDetail);
+          throw new Error(getFriendlyErrorMessage(status, errorDetail));
         }
 
         return response.json();
@@ -163,12 +177,9 @@ const InteractiveDashboard = () => {
         pages: paginationInfo.totalPages
       });
 
-      // Handle empty datasets by showing a blank report
+      // Validate that we actually found data
       if (firstRecords.length === 0) {
-        console.warn('No records found. Displaying empty dashboard.');
-        setDashboardData(generateEmptyReport());
-        setLoading(false);
-        return;
+        throw new Error('No data found for this dataset. The API might be empty or the record structure is unknown.');
       }
 
       const { totalResults, totalPages } = paginationInfo;
