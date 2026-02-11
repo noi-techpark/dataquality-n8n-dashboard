@@ -1,0 +1,81 @@
+{
+    "name": "Daily Cache Cleanup",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 0,
+                            "triggerAtMinute": 1
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                240,
+                300
+            ],
+            "id": "schedule-cleanup",
+            "name": "Schedule Trigger (12:01 AM)"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "DELETE FROM analysis_cache\nWHERE created_at < NOW() - INTERVAL '24 hours'",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.5,
+            "position": [
+                460,
+                300
+            ],
+            "id": "clear-old",
+            "name": "Clear Old Cache",
+            "credentials": {
+                "postgres": {
+                    "id": "YOUR_POSTGRES_CREDENTIAL_ID",
+                    "name": "PostgreSQL account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "content": "## Daily Cache Cleanup\n\nRuns at 12:01 AM (1 minute after cache generation)\nDeletes any cache entries older than 24 hours.\n\nThis keeps storage minimal and ensures\nonly today's data is available.",
+                "height": 240,
+                "width": 340,
+                "color": 6
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                180,
+                140
+            ],
+            "id": "note3",
+            "name": "Sticky Note2"
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Schedule Trigger (12:01 AM)": {
+            "main": [
+                [
+                    {
+                        "node": "Clear Old Cache",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "tags": []
+}

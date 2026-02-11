@@ -87,3 +87,4 @@ const ChartsGrid = ({ data }) => (
 );
 
 export default ChartsGrid;
+

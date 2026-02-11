@@ -84,6 +84,25 @@ const InteractiveDashboard = () => {
 
       console.log(`Starting analysis for: ${apiUrl}`);
 
+      // ===== CHECK CACHE FIRST FOR INSTANT RESULTS =====
+      try {
+        console.log('🔍 Checking cache...');
+        const cacheResponse = await fetch(`${API_CONFIG.CACHE_API_URL}?url=${encodeURIComponent(apiUrl)}`);
+        const cacheData = await cacheResponse.json();
+
+        if (cacheData.cached && cacheData.results) {
+          console.log('✅ Cache hit! Loading instant results...');
+          setDashboardData(cacheData.results);
+          setLoading(false);
+          return; // Exit early - we're done!
+        }
+
+        console.log('⚠️ Cache miss. Falling back to live analysis...');
+      } catch (err) {
+        console.warn('Cache check failed, proceeding with live analysis:', err);
+      }
+      // ===== END CACHE CHECK =====
+
       // Initialize the tracking state for the analysis
       let state = createAnalysisState();
       let completedPages = 0;
@@ -321,3 +340,4 @@ const InteractiveDashboard = () => {
 };
 
 export default InteractiveDashboard;
+

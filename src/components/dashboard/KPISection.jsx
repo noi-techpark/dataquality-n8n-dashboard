@@ -50,3 +50,4 @@ const KPISection = ({ data }) => {
 };
 
 export default KPISection;
+

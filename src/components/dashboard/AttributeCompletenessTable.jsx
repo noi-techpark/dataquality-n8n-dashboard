@@ -101,3 +101,4 @@ const AttributeCompletenessTable = ({ data }) => {
 };
 
 export default AttributeCompletenessTable;
+

@@ -15,3 +15,4 @@ const KPICard = ({ title, value, suffix = '', status = 'success', icon: Icon }) 
 );
 
 export default KPICard;
+
