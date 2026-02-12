@@ -112,7 +112,7 @@ const InteractiveDashboard = () => {
        * Core fetch function with adaptive fallbacks for authentication and rate limits.
        * If a request fails, it automatically retries without a token or parameters to ensure we get data.
        */
-      const fetchPage = async (pageNumber, options = { useToken: true, useParams: true }) => {
+      const fetchPage = async (pageNumber, options = { useToken: true, useParams: true }, retryCount = 0) => {
         const urlObj = new URL(apiUrl);
 
         // Use conservative page sizes for non-tourism APIs to prevent timeouts
@@ -137,17 +137,34 @@ const InteractiveDashboard = () => {
         const isOdhDomain = urlObj.hostname.includes('opendatahub') || urlObj.hostname.includes('testingmachine.eu');
         const tokenValue = (options.useToken && isOdhDomain) ? auth.getToken() : null;
 
-        console.log(`Fetching page ${pageNumber} (Auth: ${!!tokenValue ? 'Yes' : 'No'}, Params: ${options.useParams})`);
+        console.log(`Fetching page ${pageNumber} (Auth: ${!!tokenValue ? 'Yes' : 'No'}, Params: ${options.useParams}, Retry: ${retryCount})`);
 
-        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            apiUrl: urlObj.toString(),
-            token: tokenValue || undefined,
-            origin: 'interactive-dashboard-universal'
-          })
+        const response = await fetch(urlObj.toString(), {
+          method: 'GET',
+          headers: {
+            ...(tokenValue && { 'Authorization': `Bearer ${tokenValue}` }),
+            'Referer': window.location.origin,
+            'Origin': window.location.origin
+          }
         });
+
+        // Handle rate limiting (429 Too Many Requests or 403 Forbidden with Quota message)
+        if (response.status === 429 || response.status === 403) {
+          try {
+            const clone = response.clone();
+            const errorData = await clone.json().catch(() => ({}));
+
+            if ((response.status === 429 || (errorData.message && String(errorData.message).includes('Quota'))) && retryCount < 5) {
+              const retryAfter = errorData.retryAfter || 2;
+              const delay = retryAfter * 1000 * Math.pow(2, retryCount);
+
+              console.warn(`Rate limit hit for page ${pageNumber}. Retrying after ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+
+              return fetchPage(pageNumber, options, retryCount + 1);
+            }
+          } catch (e) { /* ignore check error */ }
+        }
 
         if (!response.ok) {
           const status = response.status;
@@ -217,7 +234,7 @@ const InteractiveDashboard = () => {
       if (totalPages > 1) {
         console.log(`Fetching ${totalPages - 1} remaining pages...`);
 
-        const CONCURRENCY_LIMIT = 5;
+        const CONCURRENCY_LIMIT = 3; // Reduced concurrency to avoid rate limits
 
         const worker = async () => {
           while (currentPage <= totalPages) {
@@ -250,7 +267,55 @@ const InteractiveDashboard = () => {
       }
 
       setLoading(false);
+      const finalReport = generateFinalReport(state);
+      setDashboardData(finalReport);
       console.log(`Analysis complete. Total records: ${state.totalRecords}`);
+
+      // ===== CACHE WRITE (Save results for next time) =====
+      const userId = auth.getUser()?.sub; // Get Keycloak user ID
+      //Only cache if we have results and it wasn't already cached
+      if (finalReport && state.totalRecords > 0) {
+        try {
+          console.log('💾 Initiating cache write...');
+          console.log('Sending payload:', {
+            url: apiUrl,
+            name: selectedDataset?.Shortname || 'Unknown Dataset',
+            userId: userId || null,
+            results_length: JSON.stringify(finalReport).length
+          });
+
+          fetch(API_CONFIG.CACHE_WRITE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: apiUrl,
+              name: selectedDataset?.Shortname || 'Unknown Dataset',
+              userId: userId || null, // Null for public, ID for private
+              results: finalReport
+            })
+          })
+            .then(async res => {
+              const text = await res.text();
+              console.log(`Cache write response status: ${res.status}`);
+              console.log(`Cache write response body: ${text}`);
+
+              if (!res.ok) {
+                console.error(`Cache write failed with status ${res.status}: ${text}`);
+              } else {
+                console.log('✅ Cache write confirmed successful by server');
+              }
+            })
+            .catch(err => {
+              console.error('Background cache write NETWORK error:', err);
+              console.error('Target URL was:', API_CONFIG.CACHE_WRITE_URL);
+            });
+        } catch (e) {
+          console.error('Failed to initiate cache write (try/catch block):', e);
+        }
+      } else {
+        console.warn('Skipping cache write: finalReport is missing or 0 records');
+      }
+      // ===== END CACHE WRITE =====
 
     } catch (err) {
       setError(err.message || 'Failed to generate report. Please verify the API URL.');

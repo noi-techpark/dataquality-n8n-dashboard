@@ -6,6 +6,7 @@ export const API_CONFIG = {
     METADATA_URL: import.meta.env.VITE_METADATA_URL || 'https://tourism.api.opendatahub.testingmachine.eu/v1/MetaData?pagesize=1000&origin=interactive-dashboard',
     N8N_WEBHOOK_URL: import.meta.env.VITE_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/data-quality-dashboard',
     CACHE_API_URL: import.meta.env.VITE_CACHE_API_URL || 'http://localhost:5678/webhook/analysis-cache',
+    CACHE_WRITE_URL: import.meta.env.VITE_CACHE_WRITE_URL || 'http://localhost:5678/webhook/cache-write',
 
     PAGE_SIZE: parseInt(import.meta.env.VITE_PAGE_SIZE) || 1000,
 

@@ -226,9 +226,8 @@ export const generateFinalReport = (state) => {
     // Final Quality Score based on weighted metrics
     const overallQualityScore = Number((
         overallCompleteness * 0.4 +
-        overallConsistency * 0.3 +
-        uniquenessScore * 0.2 +
-        overallConsistency * 0.1
+        overallConsistency * 0.4 +
+        uniquenessScore * 0.2
     ).toFixed(2));
 
     const criticalFieldsCount = fieldCompleteness.filter(f => f.completeness < 50).length;
