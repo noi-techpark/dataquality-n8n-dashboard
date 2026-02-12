@@ -84,22 +84,27 @@ const InteractiveDashboard = () => {
 
       console.log(`Starting analysis for: ${apiUrl}`);
 
-      // ===== CHECK CACHE FIRST FOR INSTANT RESULTS =====
-      try {
-        console.log('🔍 Checking cache...');
-        const cacheResponse = await fetch(`${API_CONFIG.CACHE_API_URL}?url=${encodeURIComponent(apiUrl)}`);
-        const cacheData = await cacheResponse.json();
+      // ===== CHECK CACHE FIRST FOR GUEST USERS =====
+      // Logged-in users always see real-time data by bypassing the cache check
+      if (!auth.isAuthenticated()) {
+        try {
+          console.log('🔍 Guest user detected: Checking cache for instant results...');
+          const cacheResponse = await fetch(`${API_CONFIG.CACHE_API_URL}?url=${encodeURIComponent(apiUrl)}`);
+          const cacheData = await cacheResponse.json();
 
-        if (cacheData.cached && cacheData.results) {
-          console.log('✅ Cache hit! Loading instant results...');
-          setDashboardData(cacheData.results);
-          setLoading(false);
-          return; // Exit early - we're done!
+          if (cacheData.cached && cacheData.results) {
+            console.log('✅ Cache hit! Loading instant results...');
+            setDashboardData(cacheData.results);
+            setLoading(false);
+            return; // Exit early - we're done!
+          }
+
+          console.log('⚠️ Cache miss. Falling back to live analysis...');
+        } catch (err) {
+          console.warn('Cache check failed, proceeding with live analysis:', err);
         }
-
-        console.log('⚠️ Cache miss. Falling back to live analysis...');
-      } catch (err) {
-        console.warn('Cache check failed, proceeding with live analysis:', err);
+      } else {
+        console.log('🔐 Authenticated user: Bypassing cache to ensure real-time data.');
       }
       // ===== END CACHE CHECK =====
 
@@ -139,13 +144,14 @@ const InteractiveDashboard = () => {
 
         console.log(`Fetching page ${pageNumber} (Auth: ${!!tokenValue ? 'Yes' : 'No'}, Params: ${options.useParams}, Retry: ${retryCount})`);
 
-        const response = await fetch(urlObj.toString(), {
-          method: 'GET',
-          headers: {
-            ...(tokenValue && { 'Authorization': `Bearer ${tokenValue}` }),
-            'Referer': window.location.origin,
-            'Origin': window.location.origin
-          }
+        // Use the n8n proxy to bypass CORS issues during live analysis
+        const response = await fetch(API_CONFIG.N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiUrl: urlObj.toString(),
+            token: tokenValue
+          })
         });
 
         // Handle rate limiting (429 Too Many Requests or 403 Forbidden with Quota message)
