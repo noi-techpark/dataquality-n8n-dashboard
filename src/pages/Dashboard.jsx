@@ -85,8 +85,8 @@ const InteractiveDashboard = () => {
       console.log(`Starting analysis for: ${apiUrl}`);
 
       // ===== CHECK CACHE FIRST FOR GUEST USERS =====
-      // Logged-in users always see real-time data by bypassing the cache check
-      if (!auth.isAuthenticated()) {
+      // Logged-in (Keycloak) users always bypass cache to see real-time data
+      if (auth.isGuestUser()) {
         try {
           console.log('🔍 Guest user detected: Checking cache for instant results...');
           const cacheResponse = await fetch(`${API_CONFIG.CACHE_API_URL}?url=${encodeURIComponent(apiUrl)}`);
@@ -104,7 +104,7 @@ const InteractiveDashboard = () => {
           console.warn('Cache check failed, proceeding with live analysis:', err);
         }
       } else {
-        console.log('🔐 Authenticated user: Bypassing cache to ensure real-time data.');
+        console.log('🔐 Authenticated user (Keycloak): Bypassing cache to ensure real-time data.');
       }
       // ===== END CACHE CHECK =====
 
