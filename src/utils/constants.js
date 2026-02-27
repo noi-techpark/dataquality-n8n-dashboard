@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export const API_CONFIG = {
-    METADATA_URL: import.meta.env.VITE_METADATA_URL || 'https://tourism.api.opendatahub.testingmachine.eu/v1/MetaData?pagesize=1000&origin=interactive-dashboard',
-    N8N_WEBHOOK_URL: import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://backend.n8n.opendatahub.testingmachine.eu/webhook/data-quality-dashboard',
-    CACHE_API_URL: import.meta.env.VITE_CACHE_API_URL || 'https://backend.n8n.opendatahub.testingmachine.eu/webhook/analysis-cache',
-    CACHE_WRITE_URL: import.meta.env.VITE_CACHE_WRITE_URL || 'https://backend.n8n.opendatahub.testingmachine.eu/webhook/cache-write',
+    METADATA_URL: import.meta.env.VITE_METADATA_URL,
+    N8N_WEBHOOK_URL: import.meta.env.VITE_N8N_WEBHOOK_URL,
+    CACHE_API_URL: import.meta.env.VITE_CACHE_API_URL,
+    CACHE_WRITE_URL: import.meta.env.VITE_CACHE_WRITE_URL,
 
-    PAGE_SIZE: parseInt(import.meta.env.VITE_PAGE_SIZE) || 1000,
+    PAGE_SIZE: parseInt(import.meta.env.VITE_PAGE_SIZE),
 
     // Keycloak Configuration
-    KEYCLOAK_URL: import.meta.env.VITE_KEYCLOAK_URL || 'https://auth.opendatahub.testingmachine.eu/auth',
-    KEYCLOAK_REALM: import.meta.env.VITE_KEYCLOAK_REALM || 'noi',
-    KEYCLOAK_CLIENT_ID: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'n8n',
-    KEYCLOAK_REDIRECT_URI: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI || (window.location.origin + '/silent-check-sso.html'),
+    KEYCLOAK_URL: import.meta.env.VITE_KEYCLOAK_URL,
+    KEYCLOAK_REALM: import.meta.env.VITE_KEYCLOAK_REALM,
+    KEYCLOAK_CLIENT_ID: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+    KEYCLOAK_REDIRECT_URI: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI,
 };
 export const CHART_COLORS = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 
