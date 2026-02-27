@@ -43,8 +43,8 @@ The result, found in the `./dist` folder, can be deployed to a web server.
 ## Information
 
 ### Authors
-- NOI Techpark Südtirol - Alto Adige
-- A. Abuhassan
+- A. Abuhassan - Initial work - [kaiozwald](https://github.com/kaiozwald)
+- RudiThoeni - tests and deployment - [RudiThoeni](https://github.com/RudiThoeni)
 
 ### Acknowledgements
-- NOI Techpark Südtirol - Alto Adige
+- [NOI Techpark Südtirol - Alto Adige](https://github.com/noi-techpark)
